@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql
+  namespace: prod
+type: Opaque
+data:
+  pass: NlFBMFpGSTRUYzZ6UmU5VWc4amIK #6QA0ZFI4Tc6zRe9Ug8jb
+  rep_pass: bWtzdFE2M3ZuYmFQeUJ5eGR6Z3YK #mkstQ63vnbaPyByxdzgv
+  rep_user: cmVwCg== #rep

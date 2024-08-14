@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis
+  namespace: prod
+data:
+  redis.conf: |
+    port 6379
+    cluster-enabled yes
+    cluster-node-timeout 5000
+    cluster-config-file /data/nodes.conf
+    appendonly yes
+
+
+

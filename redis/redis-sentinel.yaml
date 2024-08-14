@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: redis-sentinel
+      app.kubernetes.io/name: redis-sentinel
+  replicas: 3
+  serviceName: redis-sentinel-svc
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel
+        app.kubernetes.io/name: redis-sentinel
+    spec:
+      initContainers:
+        - name: init-redis  
+          image: redis:7.4
+          env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis
+                key: pass
+          command:
+          - bash
+          - "-c"
+          - |
+            set -ex
+            cp /mnt/config-map/sentinel.conf /mnt/conf.d/
+            echo "requirepass $REDIS_PASSWORD" >> /mnt/conf.d/sentinel.conf
+          volumeMounts:
+          - name: conf
+            mountPath: /mnt/conf.d/
+          - name: config-map
+            mountPath: /mnt/config-map/
+      containers:
+      - name: redis
+        image: redis:7.4
+        volumeMounts:
+          - name: conf
+            mountPath: /usr/local/etc/redis/
+        ports:
+        - name: redis
+          containerPort: 26379
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "10Mi"
+          limits:
+            cpu: "50m"
+            memory: "10Mi"
+        command:
+          - "redis-sentinel"  #redis启动命令
+        args:
+          - "/usr/local/etc/redis/sentinel.conf"  
+      volumes:
+      - name: config-map
+        configMap: 
+          name: redis
+      - name: conf
+        emptyDir: {}
+

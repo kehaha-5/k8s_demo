@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: redis
+      app.kubernetes.io/name: redis
+  serviceName: redis-svc
+  replicas: 6
+  template:
+    metadata:
+      labels:
+        app: redis
+        app.kubernetes.io/name: redis
+    spec:
+      initContainers:
+        - name: init-redis  
+          image: redis:7.4
+          env:
+          - name: REDISCLI_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: redis
+                key: pass
+          command:
+          - bash
+          - "-c"
+          - |
+            set -ex
+            cp /mnt/config-map/redis.conf /mnt/conf.d
+            echo "requirepass $REDISCLI_AUTH" >> /mnt/conf.d/redis.conf
+            echo "masterauth $REDISCLI_AUTH" >> /mnt/conf.d/redis.conf
+          volumeMounts:
+          - name: conf
+            mountPath: /mnt/conf.d/
+          - name: config-map
+            mountPath: /mnt/config-map/
+      containers:
+      - name: redis
+        image: redis:7.4
+        volumeMounts:
+          - name: conf
+            mountPath: /usr/local/etc/redis/
+          - name: data
+            mountPath: /data/
+        env:
+        - name: REDISCLI_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: pass
+        ports:
+        - name: redis
+          containerPort: 6379
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "200Mi"
+          limits:
+            cpu: "100m"
+            memory: "200Mi"
+        command:
+          - "redis-server"  #redis启动命令
+        args:
+          - "/usr/local/etc/redis/redis.conf"  #redis-server后面跟的参数,换行代表空格
+      volumes:
+      - name: config-map
+        configMap: 
+          name: redis
+      - name: conf
+        emptyDir: {}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "nfs"
+      resources:
+        requests:
+          storage: 2Gi
+
