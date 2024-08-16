@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik-dashboard
+  labels:
+    name: traefik-dashboard
+
+---
+
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik-dashboard
+spec:
+  routes:
+  - match: Host(`traefik.localhost.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+    kind: Rule
+    services:
+    - name: api@internal
+      kind: TraefikService
+    middlewares:
+      - name: auth
+
+---
+
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: auth
+  namespace: traefik-dashboard
+spec:
+  basicAuth:
+    secret: authsecret  # Kubernetes secret named "secretName"
+
+
+--- 
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: authsecret
+  namespace: traefik-dashboard
+data:
+  users:
+    cm9vdDokYXByMSRibUhSclNOaSQ0L2d4L0xNMmpzVGdBRTUzMTcwSEkuCgo= #htpasswd -nb root wwM9yCz52mWpWysVONM0 | base64

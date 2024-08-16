@@ -19,8 +19,6 @@ data:
     replicate_ignore_db=sys
   init.sh: |
     #!/bin/bash
-    REPLIC_USER=$(echo "$REPLIC_USER" | tr -d '\r\n')
-    REPLIC_PASSWORD=$(echo "$REPLIC_PASSWORD" | tr -d '\r\n') 
     until mysql  -p"$MYSQL_ROOT_PASSWORD" -e "select 1;"; do sleep 1; done
     [[ $HOSTNAME =~ -([0-9]+) ]] || exit 1
     ordinal=${BASH_REMATCH[1]}

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-demo-back-end
+  namespace: prod
+  labels:
+    app: k8s-demo-back-end
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: k8s-demo-back-end
+  template:
+    metadata:
+      labels:
+        app: k8s-demo-back-end
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - k8s-demo-back-end
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: k8s-demo-back-end
+        image: docker.io/k8s_demo/back:1.0@sha256:bf9041895c649d1a586851e2f2e072fb9680fe134c359ea59a577b010029ba5d
+        command: ["/app/k8s_demo"]
+        args: ["-c","/app/config-prod.yaml"]
+        ports:
+        - name: api-port
+          containerPort: 40814
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 3
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: pass
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: pass
+        - name: GIN_MODE
+          value: "release"

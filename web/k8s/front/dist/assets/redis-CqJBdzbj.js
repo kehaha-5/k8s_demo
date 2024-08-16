@@ -1,0 +1,1 @@
+import{f as s}from"./fetch-BHCCDS5t.js";const o=e=>s(`/api/redis_get?key=${e}`,{method:"GET"}).then(t=>t.json()),i=e=>s("/api/redis_set",{method:"POST",headers:{"Content-Type":"application/json;charset=utf-8;"},body:JSON.stringify(e)}).then(t=>t.json());export{o as g,i as s};

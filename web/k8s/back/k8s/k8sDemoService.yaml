@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-demo-back-end-service
+  namespace: prod
+  labels:
+    name: k8s-demo-back-end-service
+spec:
+  selector:
+    app: k8s-demo-back-end
+  ports:
+    - protocol: TCP
+      name: api-port
+      port: 40814     
+      targetPort: 40814  
+  clusterIP: None

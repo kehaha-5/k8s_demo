@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-demo-back-front
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: k8s-demo-back-front
+      app.kubernetes.io/name: k8s-demo-back-front
+  template:
+    metadata:
+      labels:
+        app: k8s-demo-back-front
+        app.kubernetes.io/name: k8s-demo-back-front
+    spec:
+      tolerations:
+        - key: "type"
+          operator: "Equal"
+          value: "res"
+          effect: "NoSchedule"
+      initContainers:
+        - name: init-nginx
+          image: docker.io/k8s_demo/front:1.0@sha256:fecfc2dc67c49d8ff27a77cff8aee431f9baaee3ffc0fd22da8e8da20caaeddf
+          command:
+          - sh
+          - "-c"
+          - |
+            set -ex
+            cp -r /app/* /mnt/app/
+          volumeMounts:
+          - name: app
+            mountPath: /mnt/app/
+      containers:
+      - name: app-nginx
+        image: nginx:1.27.1-alpine3.20
+        volumeMounts:
+          - name: app
+            mountPath: /usr/share/nginx/html/
+          - name: config-map
+            mountPath: /etc/nginx/conf.d/
+        ports:
+        - name: app-nginx
+          containerPort: 80
+      volumes:
+      - name: app
+        emptyDir: {}
+      - name: config-map
+        configMap: 
+          name: web-nginx
+      

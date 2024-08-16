@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis
+  namespace: prod
+type: Opaque
+data:
+  pass: ZHFYbkdJNEUxM28zY0d6V3E1QXI= #dqXnGI4E13o3cGzWq5Ar
