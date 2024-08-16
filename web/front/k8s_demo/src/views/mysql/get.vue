@@ -36,6 +36,8 @@ const query = () => {
             user.name = res.data.UserName
             user.phone = res.data.UserPhone
             user.sex = res.data.Sex
+        }else{
+            alert(res.msg)
         }
     })
 };

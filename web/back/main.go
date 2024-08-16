@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"kehaha-5/k8s_demo/api"
 	"kehaha-5/k8s_demo/config"
+	"kehaha-5/k8s_demo/health"
+	"log"
 	"net/http"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
+)
+
+var (
+	eg errgroup.Group
 )
 
 func main() {
@@ -29,5 +36,22 @@ func main() {
 		configWdPath,
 		config.Config.App.Addr,
 	)
-	httpServer.ListenAndServe()
+	eg.Go(func() error {
+		return httpServer.ListenAndServe()
+	})
+
+	healthApiRouter := gin.New()
+	health.InitApiRouter(healthApiRouter)
+	healthApiRouter.Use(gin.Recovery())
+	healthServer := &http.Server{
+		Addr:    ":8080",
+		Handler: healthApiRouter,
+	}
+	eg.Go(func() error {
+		return healthServer.ListenAndServe()
+	})
+
+	if err := eg.Wait(); err != nil {
+		log.Fatal(err)
+	}
 }

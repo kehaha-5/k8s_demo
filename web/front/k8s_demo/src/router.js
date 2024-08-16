@@ -4,8 +4,7 @@ import {
 } from "vue-router";
 
 const router = createRouter({
-    history: createWebHistory(
-        import.meta.env.BASE_URL),
+    history: createWebHistory(),
     routes: [{
             path: "/",
             name: "index",
@@ -18,12 +17,12 @@ const router = createRouter({
             redirect: "/mysql/get",
             children: [{
                 path: "/mysql/get",
-                name: "get",
-                component: import("@/views/mysql/get.vue"),
+                name: "mysql-get",
+                component: () => import("@/views/mysql/get.vue"),
             }, {
                 path: "/mysql/set",
-                name: "set",
-                component: import("@/views/mysql/set.vue"),
+                name: "mysql-set",
+                component: () => import("@/views/mysql/set.vue"),
             }, ]
         },
         {
@@ -33,12 +32,12 @@ const router = createRouter({
             redirect: "/redis/get",
             children: [{
                 path: "/redis/get",
-                name: "get",
-                component: import("@/views/redis/get.vue"),
+                name: "redis-get",
+                component: () => import("@/views/redis/get.vue"),
             }, {
                 path: "/redis/set",
-                name: "set",
-                component: import("@/views/redis/set.vue"),
+                name: "redis-set",
+                component: () => import("@/views/redis/set.vue"),
             }, ]
         },
     ],

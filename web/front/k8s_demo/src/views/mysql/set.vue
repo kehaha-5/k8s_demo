@@ -9,7 +9,7 @@
         </h2>
         <h2>年龄： <input type="number" v-model="user.age">
         </h2>
-        <h2>性别： <select type="number" v-model="user.sex">
+        <h2>性别： <select v-model="user.sex">
                 <option value="0">请选择</option>
                 <option value="1">男</option>
                 <option value="2">女</option>

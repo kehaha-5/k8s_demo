@@ -27,8 +27,8 @@ var configFile string
 func parseCommand() {
 	// 读取配置文件优先级: 命令行 > 默认值
 	flag.StringVar(&configFile, "c", "./config.yaml", "配置")
-	fmt.Println("configFile:", configFile)
 	flag.Parse()
+	fmt.Println("configFile:", configFile)
 }
 
 // ViperInit 初始化viper配置解析包，函数可接受命令行参数
@@ -39,11 +39,11 @@ func InitConfig() {
 		panic("配置文件不存在！")
 	}
 	// 读取配置文件
-	viper.AutomaticEnv()
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
 	v := viper.New()
 	v.SetConfigFile(configFile)
+	v.SetConfigType("yaml")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	if err := v.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("配置解析失败:%s", err))
 	}
@@ -100,16 +100,15 @@ func initMysql() {
 			replacerDns = append(replacerDns, slaver)
 		}
 		err := client.Use(dbresolver.Register(dbresolver.Config{
-			Sources:  []gorm.Dialector{mysql.Open(masterDns)},
 			Replicas: replacerDns,
 			// sources/replicas 负载均衡策略
 			Policy: dbresolver.RandomPolicy{},
 		}))
 
-		if err != nil {
-			fmt.Printf("开启从库配置成功")
+		if err == nil {
+			fmt.Printf("开启从库配置成功\n")
 		} else {
-			panic(fmt.Sprintf("开启从库配置失败: %s, %v", err, replacerDns))
+			panic(fmt.Sprintf("开启从库配置失败: %s", err))
 		}
 	}
 
@@ -128,6 +127,7 @@ func initRedis() {
 		Password:    Config.Redis.Password,
 		DB:          Config.Redis.DefaultDB,
 		DialTimeout: Config.Redis.DialTimeout,
+		Username:    Config.Redis.Username,
 	})
 
 	// 使用超时上下文，验证redis
@@ -135,7 +135,7 @@ func initRedis() {
 	defer cancelFunc()
 	_, err := redisClient.Ping(timeoutCtx).Result()
 	if err != nil {
-		panic("redis初始化失败! " + err.Error())
+		panic(fmt.Sprintf("redis初始化失败: %s %v", err, Config.Redis))
 	}
 	global.GvaRedisClient = redisClient
 }

@@ -5,7 +5,7 @@ import "time"
 // MySQL信息
 type mysqlConfig struct {
 	MasterHost                string        `yaml:"masterHost"`
-	SlaverHost                []string        `yaml:"slaverHost"`
+	SlaverHost                []string      `yaml:"slaverHost"`
 	Port                      string        `yaml:"port"`
 	User                      string        `yaml:"user"`
 	Password                  string        `yaml:"password"`

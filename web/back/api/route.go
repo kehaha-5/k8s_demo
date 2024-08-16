@@ -12,6 +12,7 @@ func InitApiRouter(engine *gin.Engine) {
 		systemRouter.POST("mysql_set", mysql_set)
 		systemRouter.GET("redis_get", redis_get)
 		systemRouter.POST("redis_set", redis_set)
+		systemRouter.GET("set_un_health", set_un_health)
 	}
 
 }

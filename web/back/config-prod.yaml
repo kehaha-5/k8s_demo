@@ -2,16 +2,18 @@ app:
   desc: k8s_demo
   version: v1.0.0
   addr: 0.0.0.0:40814
-  env: dev
+  env: prod
   TimeFormat: "2006-01-02 15:04:05"
 mysql:
   enable: true
-  masterHost: 127.0.0.1
+  masterHost: mysql-0.mysql-svc
   slaverHost:
+    - mysql-1.mysql-svc
+    - mysql-2.mysql-svc
   port: 3306
   user: root
-  password: root
-  database: k8s_demo
+  password:  #使用MYSQL_PASSWORD
+  database: k8s_demo 
   charset: utf8mb4 # 要支持完整的UTF-8编码,需设置成: utf8mb4
   parseTime: true # 解析time.Time类型
   timeZone: Asia%2fShanghai # 时区,若设置 Asia/Shanghai,需写成: Asia%2fShanghai
@@ -26,9 +28,14 @@ mysql:
 redis:
   enable: true
   addrs: 
-    - 127.0.0.1:6379
-  password: "MucpNx6VQYdwLHmn" # 密码(可为空)
-  username:  
+    - redis-0.redis-svc:6379 
+    - redis-1.redis-svc:6379
+    - redis-2.redis-svc:6379
+    - redis-3.redis-svc:6379
+    - redis-4.redis-svc:6379
+    - redis-5.redis-svc:6379
+  password:  # 密码 REDIS_PASSWORD
+  username: "default" 
   defaultDB: 0 # 默认DB
   dialTimeout: 1s
   

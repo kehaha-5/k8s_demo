@@ -22,6 +22,7 @@ export default defineConfig({
     }
   },
   server: {
+    port: 40815,
     proxy: {
       // 选项写法
       '/api': {

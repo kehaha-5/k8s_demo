@@ -1,13 +1,16 @@
+import {
+    fetchApi
+} from "./fetch"
 
 export const getRedis = (key) => {
-    return fetch(`/api/redis_get?key=${key}`, {
+    return fetchApi(`/api/redis_get?key=${key}`, {
         method: 'GET',
     }).then((response) => response.json());
 };
 
 
 export const setRedis = (data) => {
-    return fetch(`/api/redis_set`, {
+    return fetchApi(`/api/redis_set`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json;charset=utf-8;'
