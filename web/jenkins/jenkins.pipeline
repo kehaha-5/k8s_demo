@@ -131,9 +131,9 @@ pipeline {
                     sed -i 's|image: .*k8s_demo/.*|image: ${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}|g' ./web/k8s/front/k8s/k8sDemoFront.yaml
                     kubectl apply -f ./web/k8s/back/k8s/k8sDemoBack.yaml
                     kubectl apply -f ./web/k8s/front/k8s/k8sDemoFront.yaml
-                    kubectl annotate deployment k8s-demo-back-front -n prod  kubernetes.io/change-cause="ci/cd update version to ${params.BACKEND_VERSION}"
+                    kubectl annotate deployment k8s-demo-front-end -n prod  kubernetes.io/change-cause="ci/cd update version to ${params.BACKEND_VERSION}"
                     kubectl annotate deployment k8s-demo-back-end -n prod  kubernetes.io/change-cause="ci/cd update version to ${params.BACKEND_VERSION}"
-                    kubectl rollout restart deployment -n prod -l app=k8s-demo-back-front
+                    kubectl rollout restart deployment -n prod -l app=k8s-demo-front-end
                     kubectl rollout restart deployment -n prod -l app=k8s-demo-back-end
                       """
                 }
