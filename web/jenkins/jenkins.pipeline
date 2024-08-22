@@ -1,0 +1,153 @@
+pipeline {
+
+    parameters {
+        string(name: 'FRONTEND_VERSION', defaultValue: '1.0.0', description: '前端版本号')
+        string(name: 'BACKEND_VERSION', defaultValue: '1.0.0', description: '后端版本号')
+        string(name: 'HARBOR_IP', defaultValue: '192.168.1.120', description: 'harbor仓库ip')
+        string(name: 'HARBOR_REGISTRY', defaultValue: 'harbor.k8s.demo', description: 'harbor仓库地址')
+    }
+
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: jenkins-slave
+            spec:
+              securityContext:
+                fsGroup: 1000
+              containers:
+              - name: jnlp
+                image: harbor.k8s.demo/library/jenkins/inbound-agent-k8s-demo:alpine3.20-jdk17
+                resources:
+                  limits:
+                    memory: "1Gi"
+                    cpu: "1000m"
+                  requests:
+                    memory: "256Mi"
+                    cpu: "250m"
+            '''
+        }
+    }
+
+    stages {
+        stage('拉取代码') {
+            steps {
+                git branch: 'main', credentialsId: 'kehahaha-gitee', url: 'git@gitee.com:kehahaha/k8s_demo.git'
+            }
+        }
+        stage('构建与打包') {
+            parallel {
+                stage('打包前端项目') {
+                    steps {
+                        dir("web/front/k8s_demo/") {
+                            sh 'npm config set registry https://registry.npmmirror.com/'
+                            sh 'npm i'
+                            sh 'npm run build'
+                            sh 'cp -r ./dist ../../k8s/front/docker/'
+                        }
+                        stash includes: 'web/k8s/front/docker/**', name: 'frontend-artifact'
+                    }
+                }
+                stage('构建后端项目') {
+                    steps {
+                        dir("web/back/") {
+                            sh 'go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct '
+                            sh 'go mod download'
+                            sh 'go build -trimpath -o ./build/'
+                            sh 'cp ./build/k8s_demo ../k8s/back/docker'
+                            sh 'cp ./config-prod.yaml ../k8s/back/docker'
+                        }
+                        stash includes: 'web/k8s/back/docker/**', name: 'backend-artifact'
+                    }
+                }
+            }
+        }
+        
+        stage('构建Docker镜像') {
+            agent {
+                kubernetes {
+                    yaml '''
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                      labels:
+                        app: kaniko
+                    spec:
+                      containers:
+                      - name: kaniko
+                        image: harbor.k8s.demo/library/kaniko-project/executor:v1.6.0-debug
+                        command: ["sleep", "99d"]
+                        volumeMounts:
+                        - name: kaniko-secret
+                          mountPath: /kaniko/.docker
+                      volumes:
+                        - name: kaniko-secret
+                          secret:
+                            secretName: harbor-login
+                            items:
+                              - key: .dockerconfigjson
+                                path: config.json
+                    '''
+                }
+            }
+            steps {
+                parallel (
+                    '构建前端镜像': {
+                        unstash 'frontend-artifact'
+                        container('kaniko') {
+                            sh "echo ${params.HARBOR_IP} ${params.HARBOR_REGISTRY} >> /etc/hosts"
+                            sh """
+                                /kaniko/executor  --context `pwd`/web/k8s/front/docker -f `pwd`/web/k8s/front/docker/Dockerfile \
+                                --skip-tls-verify \
+                                --force \
+                                --destination ${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}  
+                            """
+                        }
+                    },
+                    '构建后端镜像': {
+                        unstash 'backend-artifact'
+                        container('kaniko') {
+                            sh "echo ${params.HARBOR_IP} ${params.HARBOR_REGISTRY} >> /etc/hosts"
+                            sh """
+                                /kaniko/executor --context `pwd`/web/k8s/back/docker --dockerfile `pwd`/web/k8s/back/docker/Dockerfile \
+                                --skip-tls-verify \
+                                --force \
+                                --destination ${HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION} 
+                            """
+                        }
+                    }
+                )
+            }
+        }
+
+        stage('更新K8s部署') {
+            steps {
+                script {
+                    def frontendImage = "${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}"
+                    def backendImage = "${HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION}"
+                    
+                    sh """
+                    sed -i '/image:.*k8s_demo/s |image: backendImage|g' ./web/k8s/back/k8s/k8sDemoBack.yaml
+                    sed -i '/image:.*k8s_demo/s |image: frontendImage|g' ./web/k8s/front/k8s/k8sDemoFront.yaml
+                    """
+                    withKubeConfig([credentialsId: K8S_AUTH]) {
+                      sh """
+                        kubectl config view
+                        kubectl rollout restart deployment -n prod -l app=k8s-demo-back-front
+                        kubectl rollout restart deployment -n prod -l app=k8s-demo-back-back
+                        """
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

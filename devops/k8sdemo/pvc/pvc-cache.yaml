@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-jenkins-npm-cache
+  namespace: devops-tools
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      type: nfs-npm-pv
+  storageClassName: ""  # 表示不使用 StorageClass，直接匹配 PV
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-jenkins-go-cache
+  namespace: devops-tools
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      type: nfs-go-pv
+  storageClassName: ""  # 表示不使用 StorageClass，直接匹配 PV
