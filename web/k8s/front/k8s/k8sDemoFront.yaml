@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: k8s-demo-back-front
+  name: k8s-demo-front-end
   namespace: prod
 spec:
   selector:
     matchLabels:
-      app: k8s-demo-back-front
-      app.kubernetes.io/name: k8s-demo-back-front
+      app: k8s-demo-front-end
+      app.kubernetes.io/name: k8s-demo-front-end
   template:
     metadata:
       labels:
-        app: k8s-demo-back-front
-        app.kubernetes.io/name: k8s-demo-back-front
+        app: k8s-demo-front-end
+        app.kubernetes.io/name: k8s-demo-front-end
     spec:
       tolerations:
         - key: "type"

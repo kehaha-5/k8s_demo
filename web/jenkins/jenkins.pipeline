@@ -15,6 +15,7 @@ pipeline {
             metadata:
               name: jenkins-slave
             spec:
+              serviceAccountName: jenkins-prod
               securityContext:
                 fsGroup: 1000
               containers:
@@ -77,8 +78,8 @@ pipeline {
                     spec:
                       containers:
                       - name: kaniko
-                        image: harbor.k8s.demo/library/kaniko-project/executor:v1.6.0-debug
-                        command: ["sleep", "99d"]
+                        image: harbor.k8s.demo/library/kaniko-project/executor:v1.23.2-debug
+                        command: ["sleep","99d"]
                         volumeMounts:
                         - name: kaniko-secret
                           mountPath: /kaniko/.docker
@@ -102,7 +103,7 @@ pipeline {
                                 /kaniko/executor  --context `pwd`/web/k8s/front/docker -f `pwd`/web/k8s/front/docker/Dockerfile \
                                 --skip-tls-verify \
                                 --force \
-                                --destination ${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}  
+                                --destination ${params.HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}  
                             """
                         }
                     },
@@ -114,7 +115,7 @@ pipeline {
                                 /kaniko/executor --context `pwd`/web/k8s/back/docker --dockerfile `pwd`/web/k8s/back/docker/Dockerfile \
                                 --skip-tls-verify \
                                 --force \
-                                --destination ${HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION} 
+                                --destination ${params.HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION} 
                             """
                         }
                     }
@@ -125,21 +126,16 @@ pipeline {
         stage('更新K8s部署') {
             steps {
                 script {
-                    def frontendImage = "${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}"
-                    def backendImage = "${HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION}"
-                    
                     sh """
-                    sed -i '/image:.*k8s_demo/s |image: backendImage|g' ./web/k8s/back/k8s/k8sDemoBack.yaml
-                    sed -i '/image:.*k8s_demo/s |image: frontendImage|g' ./web/k8s/front/k8s/k8sDemoFront.yaml
-                    """
-                    withKubeConfig([credentialsId: K8S_AUTH]) {
-                      sh """
-                        kubectl config view
-                        kubectl rollout restart deployment -n prod -l app=k8s-demo-back-front
-                        kubectl rollout restart deployment -n prod -l app=k8s-demo-back-back
-                        """
-                    }
-                    
+                    sed -i 's|image: .*k8s_demo/.*|image: ${HARBOR_REGISTRY}/k8s_demo/back:${params.BACKEND_VERSION}|g' ./web/k8s/back/k8s/k8sDemoBack.yaml
+                    sed -i 's|image: .*k8s_demo/.*|image: ${HARBOR_REGISTRY}/k8s_demo/front:${params.FRONTEND_VERSION}|g' ./web/k8s/front/k8s/k8sDemoFront.yaml
+                    kubectl apply -f ./web/k8s/back/k8s/k8sDemoBack.yaml
+                    kubectl apply -f ./web/k8s/front/k8s/k8sDemoFront.yaml
+                    kubectl annotate deployment k8s-demo-back-front -n prod  kubernetes.io/change-cause="ci/cd update version to ${params.BACKEND_VERSION}"
+                    kubectl annotate deployment k8s-demo-back-end -n prod  kubernetes.io/change-cause="ci/cd update version to ${params.BACKEND_VERSION}"
+                    kubectl rollout restart deployment -n prod -l app=k8s-demo-back-front
+                    kubectl rollout restart deployment -n prod -l app=k8s-demo-back-end
+                      """
                 }
             }
         }
