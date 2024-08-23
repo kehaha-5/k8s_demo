@@ -28,6 +28,20 @@ pipeline {
                   requests:
                     memory: "256Mi"
                     cpu: "250m"
+                volumeMounts:  
+                  - name: go-cache
+                    mountPath: /home/jenkins/go
+                  - name: npm-cache
+                    mountPath: /home/jenkins/.npm
+              volumes:  
+              - name: go-cache
+                nfs:
+                  server: 192.168.1.125  
+                  path: /mnt/nfs_share/go-cache  
+              - name: npm-cache
+                nfs:
+                  server: 192.168.1.125  
+                  path: /mnt/nfs_share/npm-cache  
             '''
         }
     }
