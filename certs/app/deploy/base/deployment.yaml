@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-client
+  labels:
+    app: http-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: http-client
+  template:
+    metadata:
+      labels:
+        app: http-client
+    spec:
+      containers:
+      - name: http-client
+        image: http-client:v1.0
+        imagePullPolicy: IfNotPresent
+        args: 
+          - URL
+          - "http://http-server:8080"
+        command: 
+          - /app
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+        env: 
+          - name: APP_ENV
+            configMapKeyRef:
+              name: http-client-config
+              key: APP_ENV
+        ConfigMap:
+          - name: http-client-config
