@@ -16,10 +16,10 @@ spec:
     spec:
       containers:
       - name: http-client
-        image: http-client:v1.0
+        image: http-client:v1.1
         imagePullPolicy: IfNotPresent
         args: 
-          - URL
+          - "-URL"
           - "http://http-server:8080"
         command: 
           - /app
@@ -32,8 +32,14 @@ spec:
             memory: "128Mi"
         env: 
           - name: APP_ENV
-            configMapKeyRef:
-              name: http-client-config
-              key: APP_ENV
-        ConfigMap:
-          - name: http-client-config
+            valueFrom:
+              configMapKeyRef:
+                name: http-client-config
+                key: APP_ENV
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: http-client-config
