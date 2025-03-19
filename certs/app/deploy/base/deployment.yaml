@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: http-client
+  name: https-client
   labels:
-    app: http-client
+    app: https-client
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: http-client
+      app: https-client
   template:
     metadata:
       labels:
-        app: http-client
+        app: https-client
     spec:
       containers:
-      - name: http-client
-        image: http-client:v1.1
+      - name: https-client
+        image: https-client:v1.0
         imagePullPolicy: IfNotPresent
         args: 
-          - "-URL"
-          - "http://http-server:8080"
+          - - URL
+          - https://https-server:8080
         command: 
-          - /app
+          - /app/https-client
         resources:
           requests:
             cpu: "100m"
@@ -34,7 +34,7 @@ spec:
           - name: APP_ENV
             valueFrom:
               configMapKeyRef:
-                name: http-client-config
+                name: https-client-config
                 key: APP_ENV
         volumeMounts:
           - name: config-volume
@@ -42,4 +42,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: http-client-config
+            name: https-client-config

@@ -5,18 +5,24 @@ resources:
 - ../../base
 
 configMapGenerator:
-  - name: http-client-config
+  - name: https-client-config
     literals:
       - APP_ENV=prod
 
 patchesJson6902:
   - target:
+      group: apps
+      version: v1
       kind: Deployment
-      name: http-client
+      name: https-client
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/args
         value:
-          - URL
+          - "-URL"
           - "https://baidu.com"
 
+images:
+  - name: https-client
+    newTag: v1.0
+    newName: https-client

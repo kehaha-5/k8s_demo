@@ -1,11 +1,11 @@
 # Makefile
 
 # Variables
-IMAGE_NAME := http-client:v1.0
+IMAGE_NAME := https-client:v1.0
 DOCKERFILE_PATH := ./Dockerfile
 
 # Default target
-all: build import_kind clean
+all: build clean_kind_image import_kind clean
 
 # Build Docker image
 build:
@@ -18,4 +18,11 @@ import_kind:
 clean:
 	docker rmi $(IMAGE_NAME)
 
-.PHONY: all build import_kind clean
+clean_kind_image:
+	docker exec -it my-testing-worker2 crictl rmi $(IMAGE_NAME) 
+	docker exec -it my-testing-worker crictl rmi $(IMAGE_NAME) 
+	docker exec -it my-testing-control-plane crictl rmi $(IMAGE_NAME) 
+
+build_first: build import_kind clean 
+
+.PHONY: all build import_kind clean clean_kind_image

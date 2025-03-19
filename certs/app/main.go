@@ -39,8 +39,8 @@ func main() {
 		}
 		fmt.Println()
 		fmt.Println(string(body))
-		time.Sleep(5 * time.Second)
 		fmt.Println("------------------- will called in next 5s -------------------------------")
+		time.Sleep(5 * time.Second)
 
 	}
 
