@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base
+
+configMapGenerator:
+  - name: https-client-config
+    literals:
+      - APP_ENV=uat
+
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: https-client
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - "-URL"
+          - "https://ssl.test.com:50443"
+      - op: add
+        path: /spec/template/spec/hostAliases
+        value:
+          - ip: "172.18.0.1"
+            hostnames:
+              - "ssl.test.com"
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: public-bundle
+          configMap:
+            name: public-bundle
+            defaultMode: 0644
+            optional: false
+            items:
+            - key: ssl.test.com.crt
+              path: ca-certificates.crt
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: public-bundle
+          mountPath: /etc/ssl/certs/
+     
+
+images:
+  - name: https-client
+    newTag: v1.0
+    newName: https-client
