@@ -5,9 +5,12 @@ metadata:
 spec:
   sources:
   - useDefaultCAs: true
+  - secret:
+      name: "ssl-test-web-crt"
+      key: "ssl.test.com.crt"
   target:
     configMap:
-      key: "ssl.test.com.crt"
+      key: "ca-certificates.crt"
     namespaceSelector:
       matchLabels:
         trust: enabled

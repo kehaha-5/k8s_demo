@@ -24,13 +24,14 @@ func main() {
 		resp, err := http.Get(*url)
 		if err != nil {
 			fmt.Printf("Error fetching URL: %v\n", err)
-			os.Exit(1)
+			fmt.Println("------------------- will called in next 5s -------------------------------")
+			time.Sleep(5 * time.Second)
+			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Printf("Error reading response body: %v\n", err)
-			os.Exit(1)
 		}
 
 		fmt.Printf("HTTP/1.1 %s\n", resp.Status)

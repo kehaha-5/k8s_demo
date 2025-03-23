@@ -35,15 +35,12 @@ patchesJson6902:
             name: public-bundle
             defaultMode: 0644
             optional: false
-            items:
-            - key: ssl.test.com.crt
-              path: ca-certificates.crt
       - op: add
         path: /spec/template/spec/containers/0/volumeMounts/-
         value:
           name: public-bundle
           mountPath: /etc/ssl/certs/
-     
+          readOnly: true
 
 images:
   - name: https-client
